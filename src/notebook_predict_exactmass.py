@@ -15,7 +15,7 @@ Internet OFF. Reads Kaggle runtime test.parquet (handles hidden IDs).
 
 import pandas as pd
 import numpy as np
-from collections import defaultdict
+from collections import defaultdict, Counter
 import os
 
 INPUT_DIR = os.environ.get('CASMI_INPUT',
@@ -194,7 +194,7 @@ def main():
             (row['precursor_mz'], row['ms2_mzs'], row['ms2_normalized_intensities']))
     print(f"Test: {len(test_df)} spectra, {len(mol_spectra)} molecules", flush=True)
 
-    common_smi = max(set(smiles), key=smiles.count)
+    common_smi = Counter(smiles).most_common(1)[0][0]
     results = []
     lock_stats = defaultdict(int)
 
