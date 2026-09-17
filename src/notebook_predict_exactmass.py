@@ -40,19 +40,27 @@ MAX_QPEAKS = 400
 
 # ---------- exact-mass chemistry ----------
 def _match(q_mz, q_int, r_mz, r_int, ppm):
+    # Greedy intensity-desc matching, nearest unused ref peak within ppm.
+    # r_mz is sorted ascending (index invariant) -> searchsorted windows.
+    # Exactly equivalent to the benchmarked full-scan version.
     if len(q_mz) == 0 or len(r_mz) == 0:
         return 0.0
     used = np.zeros(len(r_mz), dtype=bool)
     score = 0.0
-    for mz, inten in zip(q_mz, q_int):
-        tol = mz * ppm * 1e-6
-        d = np.abs(r_mz - mz)
-        cand = np.where((d <= tol) & (~used))[0]
-        if len(cand) == 0:
-            continue
-        j = cand[np.argmin(d[cand])]
-        used[j] = True
-        score += float(np.sqrt(inten * r_int[j]))
+    tols = q_mz * ppm * 1e-6
+    los = np.searchsorted(r_mz, q_mz - tols)
+    his = np.searchsorted(r_mz, q_mz + tols)
+    for qi in range(len(q_mz)):
+        best, bd = -1, tols[qi]
+        lo, hi = int(los[qi]), int(his[qi])
+        for j in range(lo, hi):
+            if not used[j]:
+                d = abs(r_mz[j] - q_mz[qi])
+                if d < bd:
+                    bd, best = d, j
+        if best >= 0:
+            used[best] = True
+            score += float(np.sqrt(q_int[qi] * r_int[best]))
     return score
 
 
@@ -169,13 +177,14 @@ def main():
     starts, lens = idx['p_starts'], idx['p_lens']
     flat_mz = idx['flat_mz'].astype(np.float64)
     flat_int = idx['flat_int'].astype(np.float64)
+    flat_rung = (np.log(flat_mz) / LN_PHI).astype(np.float64)  # precomputed once
     n_ref = len(precs)
     print(f"Index: {n_ref} spectra", flush=True)
 
     def ref_peaks(i):
         s = int(starts[i])
         e = s + int(lens[i])
-        return flat_mz[s:e], flat_int[s:e]
+        return flat_mz[s:e], flat_int[s:e], flat_rung[s:e]
 
     print("Loading test data...", flush=True)
     test_df = pd.read_parquet(os.path.join(INPUT_DIR, 'test.parquet'))
@@ -220,7 +229,7 @@ def main():
 
         for ri in range(lo, hi):
             r_prec = float(precs[ri])
-            r_mz, r_it = ref_peaks(ri)
+            r_mz, r_it, r_r = ref_peaks(ri)
             if len(r_mz) == 0:
                 continue
             r_ord = np.argsort(-r_it)
@@ -235,7 +244,6 @@ def main():
                     s1 = float(q_vec1 @ b)
                     if s1 > v1[smi]:
                         v1[smi] = s1
-                r_r = np.log(r_mz) / LN_PHI
                 s2 = rung_match(q_r, q_it, r_r, r_it)
                 if s2 > v2[smi]:
                     v2[smi] = s2
