@@ -1,0 +1,30 @@
+RUNG 2 CORRECTED BENCHMARK (v2) — 2026-09-17
+No Cartesian measure of non-Cartesian maps. map4 dropped (domain fact).
+TOL_RUNG = 4.156e-05 rungs = 20.0 ppm, scale-free (one number, every mass)
+Reference spectra: 20000, Queries: 300
+
+MAP TOP-1 (known-structure holdout):
+  map1 raw binned (Cartesian reference): 0.810
+  map2 phi-rung address match (phi-native): 0.940
+  map3 conjugate intervals (phi-native): 0.423
+
+PHI-RUNG (map2) top1/top5/top25: 0.940 / 0.970 / 0.970
+EXACT-MASS top1/top5/top25:      0.947 / 0.970 / 0.970
+
+CONJUGATE GAP (fwd-rev at map3 top call): mean 0.253, median 0.179
+
+LOCK (3 witnesses: map1+map2+map3):
+  LOCKED: 115/300 (38.3%)  output-accuracy 114/115 = 0.991
+  MARGINAL: 152/300 (50.7%)  output-accuracy 140/152 = 0.921
+  REJECTED: 33/300 (11.0%)  output-accuracy 0/33 = 0.000
+  REJECTED fallback (map1 read, labeled): 1/33 = 0.030
+
+DIVERGENCE map2 (phi-rung) vs exact-mass (chemistry):
+  agree 297, phi-right 0, base-right 2, neither 1
+
+NOVEL FLAG (relative threshold):
+  map2 top-score: min 0.064, 5th-pct 0.623, median 0.862
+  flagged below 5th percentile: 15/300
+  NOTE: holdout queries all have their molecule in-ref; flags are
+  low-confidence calls, not true novels. True novel test needs the
+  molecule-disjoint design.

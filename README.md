@@ -10,14 +10,23 @@ Kaggle notebook: [CASMI26 Baseline Predictor](https://www.kaggle.com/code/tyreej
 
 - **Rung 1 — sealed.** Runtime prediction pipeline: reads `test.parquet` at
   scoring time (works on visible and hidden test sets), searches a spectral
-  index, writes `submission.csv`. First scored submission in history:
-  public score **0.000** (2026-09-17). The pipeline runs clean; the ranking
-  hit nothing — the number is the starting line, not the verdict.
-- **Rung 2 — in progress.** Diagnosis: coverage (true molecules missing from
-  the index) vs method (similarity too weak). Upgrades on the bench:
-  exact-mass (ppm) fragment matching — the data is high-resolution
-  (4 decimals) and 1-Da binning throws it away; adduct → neutral mass →
-  formula enumeration; neutral-loss fingerprints.
+  index, writes `submission.csv`. TYREE's first scored CASMI submission:
+  displayed public score **0.000** (2026-09-17) — that is the verified
+  public number; it does not by itself prove no ranked candidate matched.
+  The pipeline runs clean; the 0.000 is the starting line, not the verdict.
+- **Rung 2 — measured 2026-09-17.** Exact-mass chemistry baseline: 20 ppm
+  greedy fragment + neutral-loss matching, known-structure holdout top-1
+  **0.947** (`src/exact_mass_search.py`, `src/benchmark_exact_mass.py`).
+  Phi-frame, measured without any Cartesian grid on the phi maps
+  (`src/benchmark_phi_frame_v3.py`, `models/phi_frame_v3_report.txt`):
+  map2 phi-rung address match top-1 **0.940** (ranking rung — fixed ppm in
+  m/z is a fixed rung tolerance, the coordinate absorbs the scale);
+  map3 conjugate-interval multiset top-1 **0.723**; map4 reflection dropped
+  (fragmentation has no reflection symmetry — domain fact, not a residue).
+  3-witness lock: LOCKED 199/300 (66.3%) at **0.990**, MARGINAL 80/300 at
+  0.787, REJECTED 21/300 (lock refuses; these are the genuinely hard
+  spectra). Deployable molecule-balanced raw-peak index: 539,120 spectra /
+  183,192 molecules (`models/casmi_raw_index.npz`, 55.7 MB).
 
 ## Pipeline
 
