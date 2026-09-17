@@ -70,13 +70,22 @@ def _cos_match(s, q_int, r_int):
 
 
 def exact_mass_sim(q_prec, q_mz, q_int, r_prec, r_mz, r_int):
+    # _match() searchsorts the reference arrays: they MUST be ascending here,
+    # regardless of the order the caller passes. Query stays intensity-ordered
+    # (greedy traversal). Neutral losses inherit descending order from
+    # r_prec - r_mz, so they are sorted ascending too.
+    o = np.argsort(r_mz)
+    r_mz, r_int = r_mz[o], r_int[o]
     frag = _cos_match(_match(q_mz, q_int, r_mz, r_int, PPM), q_int, r_int)
     q_lm = q_prec - q_mz
     qm = q_lm > 0
     r_lm = r_prec - r_mz
     rm = r_lm > 0
-    loss = _cos_match(_match(q_lm[qm], q_int[qm], r_lm[rm], r_int[rm], PPM),
-                      q_int[qm], r_int[rm])
+    rl, ri = r_lm[rm], r_int[rm]
+    oo = np.argsort(rl)
+    rl, ri = rl[oo], ri[oo]
+    loss = _cos_match(_match(q_lm[qm], q_int[qm], rl, ri, PPM),
+                      q_int[qm], ri)
     return FRAG_W * frag + LOSS_W * loss
 
 
